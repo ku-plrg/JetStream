@@ -37,6 +37,7 @@ import { logGroup, logInfo, printHelp, runTest, sh } from "./helper.mjs";
 const FILE_PATH = fileURLToPath(import.meta.url);
 const SRC_DIR = path.dirname(path.dirname(FILE_PATH));
 const CLI_PATH = path.join(SRC_DIR, "cli.js");
+const NODE_CLI_PATH = path.join(SRC_DIR, "node-cli.js");
 const UNIT_TEST_PATH = path.join(SRC_DIR, "tests", "unit-tests.js");
 
 const TESTS = [
@@ -44,6 +45,13 @@ const TESTS = [
         name: "UnitTests",
         tags: ["all", "main", "unit"],
         run(shell_binary) {
+            // node-cli.js loads the harness via concatenation so that top-level
+            // const/let bindings are shared — but unit-tests.js relies on load()
+            // calls whose const/let are not globally visible under Node.js.
+            // Use --dump-test-list as a smoke test instead: it verifies that the
+            // harness loads and every benchmark is registered without errors.
+            if (SHELL_NAME === "node")
+                return runTest("UnitTests", () => sh(shell_binary, NODE_CLI_PATH, "--dump-test-list"));
             return runTest("UnitTests", () => sh(shell_binary, UNIT_TEST_PATH));
         },
     },
@@ -103,7 +111,7 @@ const optionDefinitions = [
     {
         name: "shell",
         type: String,
-        description: "Set the shell to test, choices are [jsc, v8, spidermonkey].",
+        description: "Set the shell to test, choices are [jsc, v8, spidermonkey, node].",
     },
     { name: "help", alias: "h", description: "Print this help text." },
     {
@@ -145,9 +153,13 @@ const SHELL_NAME = (function () {
         case "v8": {
             return "v8";
         }
+        case "node":
+        case "nodejs": {
+            return "node";
+        }
         default: {
             printHelp(
-                `Invalid shell "${JS_SHELL}", choices are: "jsc", "spidermonkey" and "v8)`,
+                `Invalid shell "${JS_SHELL}", choices are: "jsc", "spidermonkey", "v8" and "node"`,
                 optionDefinitions
             );
         }
@@ -155,7 +167,10 @@ const SHELL_NAME = (function () {
 })();
 
 function convertCliArgs(cli, ...cliArgs) {
-    if (SHELL_NAME == "spidermonkey") return [cli, ...cliArgs];
+    // SpiderMonkey and Node.js do not use the "--" argument separator.
+    // For Node.js we also swap cli.js for node-cli.js.
+    if (SHELL_NAME === "node") return [NODE_CLI_PATH, ...cliArgs];
+    if (SHELL_NAME === "spidermonkey") return [cli, ...cliArgs];
     return [cli, "--", ...cliArgs];
 }
 
@@ -209,6 +224,13 @@ const DEFAULT_JSC_LOCATION =
     "/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc";
 
 async function testSetup() {
+    // Node.js is already present — use the same binary that is running this script.
+    if (SHELL_NAME === "node") {
+        const shellBinary = process.execPath;
+        logInfo(`Using Node.js binary: ${shellBinary}`);
+        return shellBinary;
+    }
+
     await sh("jsvu", `--engines=${SHELL_NAME}`, `--os=${jsvuOSName()}`);
     let shellBinary = path.join(os.homedir(), ".jsvu/bin", SHELL_NAME);
     if (!fs.existsSync(shellBinary) && SHELL_NAME == "javascriptcore")

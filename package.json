@@ -32,6 +32,7 @@
         "test:v8": "npm run test:prepare && node tests/run-shell.mjs --shell v8",
         "test:jsc": "npm run test:prepare && node tests/run-shell.mjs --shell jsc",
         "test:spidermonkey": "npm run test:prepare && node tests/run-shell.mjs --shell spidermonkey",
+        "test:node": "npm run test:prepare && node tests/run-shell.mjs --shell node",
         "test:build": "npm run test:prepare && node tests/run-build.mjs",
         "test:license": "npm run test:prepare && node tests/run-license.mjs",
         "test:in-depth": "npm run test:prepare && node tests/run-in-depth.mjs"
