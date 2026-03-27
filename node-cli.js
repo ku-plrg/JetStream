@@ -238,9 +238,11 @@ async function runJetStream() {
         await globalThis.JetStream.initialize();
         await globalThis.JetStream.start();
     } catch (e) {
-        console.error("JetStream3 failed: " + e);
-        console.error(e.stack);
-        throw e;
+        let eStr;
+        try { eStr = String(e); } catch (_) { eStr = Object.prototype.toString.call(e); }
+        console.error("JetStream3 failed: " + eStr);
+        console.error(e?.stack ?? "(no stack)");
+        process.exit(1);
     }
 }
 

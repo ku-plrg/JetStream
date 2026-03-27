@@ -7355,7 +7355,7 @@ if (ORT_SYMBOL in globalThis) {
     // If the JS runtime exposes their own ONNX runtime, use it
     ONNX = globalThis[ORT_SYMBOL];
 
-} else if (_env_js__WEBPACK_IMPORTED_MODULE_0__.apis.IS_NODE_ENV) {
+} else if (_env_js__WEBPACK_IMPORTED_MODULE_0__.apis.IS_NODE_ENV && onnxruntime_node__WEBPACK_IMPORTED_MODULE_1__?.InferenceSession) {
     ONNX = onnxruntime_node__WEBPACK_IMPORTED_MODULE_1__ ?? /*#__PURE__*/ (onnxruntime_node__WEBPACK_IMPORTED_MODULE_1___namespace_cache || (onnxruntime_node__WEBPACK_IMPORTED_MODULE_1___namespace_cache = __webpack_require__.t(onnxruntime_node__WEBPACK_IMPORTED_MODULE_1__, 2)));
 
     // Updated as of ONNX Runtime 1.20.1
@@ -7568,7 +7568,8 @@ class FeatureExtractor extends _utils_generic_js__WEBPACK_IMPORTED_MODULE_1__.Ca
  * @private
  */
 function validate_audio_inputs(audio, feature_extractor) {
-    if (!(audio instanceof Float32Array || audio instanceof Float64Array)) {
+    if (!(audio instanceof Float32Array || audio instanceof Float64Array ||
+            audio?.constructor?.name === 'Float32Array' || audio?.constructor?.name === 'Float64Array')) {
         throw new Error(
             `${feature_extractor} expects input to be a Float32Array or a Float64Array, but got ${audio?.constructor?.name ?? typeof audio} instead. ` +
             `If using the feature extractor directly, remember to use \`read_audio(url, sampling_rate)\` to obtain the raw audio data of the file/url.`
@@ -12074,7 +12075,7 @@ async function getSession(pretrained_model_name_or_path, fileName, options) {
 
     // If the device is not specified, we use the default (supported) execution providers.
     const selectedDevice = /** @type {import("./utils/devices.js").DeviceType} */(
-        device ?? (_env_js__WEBPACK_IMPORTED_MODULE_14__.apis.IS_NODE_ENV ? 'cpu' : 'wasm')
+        device ?? (_env_js__WEBPACK_IMPORTED_MODULE_14__.apis.IS_NODE_ENV && (0,_backends_onnx_js__WEBPACK_IMPORTED_MODULE_1__.deviceToExecutionProviders)().includes('cpu') ? 'cpu' : 'wasm')
     );
 
     const executionProviders = (0,_backends_onnx_js__WEBPACK_IMPORTED_MODULE_1__.deviceToExecutionProviders)(selectedDevice);

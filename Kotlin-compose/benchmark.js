@@ -134,7 +134,12 @@ class Benchmark {
 
     // Compile once in the first iteration.
     if (!this.wasmInstanceExports) {
-      const skikoExports = (await this.skikoInstantiate()).wasmExports;
+      // Pass wasmBinary directly so the Emscripten Module can load it without
+      // needing Node.js fs or browser fetch (both are unavailable/disabled here).
+      const skikoWasm = preload['skiko.wasm'];
+      const skikoExports = (await this.skikoInstantiate({
+        wasmBinary: skikoWasm?.buffer ? skikoWasm.buffer : skikoWasm,
+      })).wasmExports;
       this.wasmInstanceExports = (await this.mainInstantiate({ './skiko.mjs': skikoExports })).exports;
     }
 

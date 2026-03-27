@@ -2,8 +2,27 @@ diff --git a/transformersjs/build/transformers.js b/transformersjs/build/transfo
 index b8e1342..0c702e8 100644
 --- a/transformersjs/build/transformers.js
 +++ b/transformersjs/build/transformers.js
-@@ -37868,11 +37868,10 @@ function quantize_embeddings(tensor, precision) {
- /******/ 
+@@ -7356,7 +7356,9 @@ if (ORT_SYMBOL in globalThis) {
+     // If the JS runtime exposes their own ONNX runtime, use it
+     ONNX = globalThis[ORT_SYMBOL];
+
+-} else if (_env_js__WEBPACK_IMPORTED_MODULE_0__.apis.IS_NODE_ENV) {
++// Only use onnxruntime-node if it is actually available (not the empty ignored stub
++// bundled for browser builds).  Fall through to onnxruntime-web (wasm) otherwise.
++} else if (_env_js__WEBPACK_IMPORTED_MODULE_0__.apis.IS_NODE_ENV && onnxruntime_node__WEBPACK_IMPORTED_MODULE_1__?.InferenceSession) {
+     ONNX = onnxruntime_node__WEBPACK_IMPORTED_MODULE_1__ ?? /*#__PURE__*/ (onnxruntime_node__WEBPACK_IMPORTED_MODULE_1___namespace_cache || (onnxruntime_node__WEBPACK_IMPORTED_MODULE_1___namespace_cache = __webpack_require__.t(onnxruntime_node__WEBPACK_IMPORTED_MODULE_1__, 2)));
+@@ -12075,7 +12077,8 @@ function quantize_embeddings(tensor, precision) {
+     // If the device is not specified, we use the default (supported) execution providers.
+     const selectedDevice = /** @type {import("./utils/devices.js").DeviceType} */(
+-        device ?? (_env_js__WEBPACK_IMPORTED_MODULE_14__.apis.IS_NODE_ENV ? 'cpu' : 'wasm')
++        device ?? (_env_js__WEBPACK_IMPORTED_MODULE_14__.apis.IS_NODE_ENV && (0,_backends_onnx_js__WEBPACK_IMPORTED_MODULE_1__.deviceToExecutionProviders)().includes('cpu') ? 'cpu' : 'wasm')
+     );
+@@ -7570,6 +7576,8 @@ function validate_audio_inputs(audio, feature_extractor) {
+-    if (!(audio instanceof Float32Array || audio instanceof Float64Array)) {
++    if (!(audio instanceof Float32Array || audio instanceof Float64Array ||
++            audio?.constructor?.name === 'Float32Array' || audio?.constructor?.name === 'Float64Array')) {
+@@ -37868,11 +37874,10 @@ function quantize_embeddings(tensor, precision) {
+ /******/
  /******/ /* webpack/runtime/publicPath */
  /******/ (() => {
 -/******/ 	var scriptUrl;

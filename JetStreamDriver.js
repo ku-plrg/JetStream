@@ -491,10 +491,20 @@ class Driver {
     }
 
     pushError(name, error) {
+        let errorStr;
+        try {
+            errorStr = String(error);
+        } catch (e) {
+            try {
+                errorStr = Object.prototype.toString.call(error);
+            } catch (e2) {
+                errorStr = "(unrepresentable error)";
+            }
+        }
         this.errors.push({
             benchmark: name,
-            error: error.toString(),
-            stack: error.stack
+            error: errorStr,
+            stack: error?.stack
         });
     }
 

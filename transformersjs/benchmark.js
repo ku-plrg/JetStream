@@ -80,6 +80,9 @@ class Benchmark {
       env.allowRemoteModels = false;
       env.allowLocalModels = true;
       env.localModelPath = './transformersjs/build/models/';
+      // Disable FS caching so the model is returned as a buffer (Uint8Array) rather
+      // than a file path string — onnxruntime-web (wasm backend) requires a buffer.
+      env.useFSCache = false;
 
       // Always select the Wasm backend, nothing else.
       delete env.backends.onnx.webgl;
