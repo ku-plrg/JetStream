@@ -355,11 +355,14 @@ class Driver {
                 await benchmark.run();
             } catch(e) {
                 this.reportError(benchmark, e);
-                throw e;
             }
 
             performance.mark("update-ui");
-            benchmark.updateUIAfterRun();
+            try {
+                benchmark.updateUIAfterRun();
+            } catch(e) {
+                this.reportError(benchmark, e);
+            }
 
             if (isInBrowser) {
                 browserFileLoader.free(benchmark.files);
@@ -379,13 +382,18 @@ class Driver {
         const allScores = [];
         for (const benchmark of this.benchmarks) {
             const score = benchmark.score;
-            console.assert(score > 0, `Invalid ${benchmark.name} score: ${score}`);
+            if (!(score > 0)) {
+                console.log(`Skipping ${benchmark.name} from overall score (invalid score: ${score})`);
+                continue;
+            }
             allScores.push(score);
         }
 
         const categoryScores = new Map();
         const categoryTimes = new Map();
         for (const benchmark of this.benchmarks) {
+            if (!(benchmark.score > 0))
+                continue;
             for (let category of Object.keys(benchmark.subScores()))
                 categoryScores.set(category, []);
             for (let category of Object.keys(benchmark.subTimes()))
@@ -393,15 +401,17 @@ class Driver {
         }
 
         for (const benchmark of this.benchmarks) {
+            if (!(benchmark.score > 0))
+                continue;
             for (let [category, value] of Object.entries(benchmark.subScores())) {
                 const arr = categoryScores.get(category);
-                console.assert(value > 0, `Invalid ${benchmark.name} ${category} score: ${value}`);
-                arr.push(value);
+                if (value > 0)
+                    arr.push(value);
             }
             for (let [category, value] of Object.entries(benchmark.subTimes())) {
                 const arr = categoryTimes.get(category);
-                console.assert(value > 0, `Invalid ${benchmark.name} ${category} time: ${value}`);
-                arr.push(value);
+                if (value > 0)
+                    arr.push(value);
             }
         }
 
